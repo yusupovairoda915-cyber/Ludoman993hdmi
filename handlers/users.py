@@ -55,3 +55,54 @@ async def cmd_free_money(message: types.Message):
         reply_markup=builder.as_markup(),
         parse_mode="Markdown"
     )
+@router.message(Command("work"))
+async def cmd_work(message: types.Message):
+    # Генерируем случайную ситуацию на кассе
+    price = random.randint(10, 900)  # Цена товара
+    cash_given = random.choice([100, 200, 500, 1000]) # Сколько дал клиент
+    
+    # Если клиент дал меньше, чем стоит товар — пересчитываем
+    if cash_given < price:
+        cash_given = 1000
+        
+    correct_change = cash_given - price
+    
+    # Создаем варианты ответов (один правильный, два ложных)
+    options = [correct_change, correct_change + 50, correct_change - 20]
+    random.shuffle(options)
+    
+    builder = InlineKeyboardBuilder()
+    for opt in options:
+        # В callback_data зашиваем ответ: "work_ответ_правильныйОтвет"
+        builder.row(types.InlineKeyboardButton(
+            text=f"💰 {opt} монет", 
+            callback_data=f"work_{opt}_{correct_change}"
+        ))
+
+    await message.answer(
+        f"👨‍🍳 **Смена в магазине!**\n\n"
+        f"Покупатель взял товар за **{price}** монет.\n"
+        f"Он протягивает тебе купюру в **{cash_given}** монет.\n\n"
+        f"**Какую сдачу нужно выдать?**",
+        reply_markup=builder.as_markup(),
+        parse_mode="Markdown"
+    )
+
+@router.callback_query(lambda c: c.data.startswith('work_'))
+async def process_work_answer(callback: types.Callback_query):
+    # Разбираем данные из кнопки
+    _, user_answer, correct_answer = callback.data.split('_')
+    
+    if user_answer == correct_answer:
+        reward = 150 # Сколько платим за правильный ответ
+        await update_balance(callback.from_user.id, reward)
+        await callback.message.edit_text(
+            f"✅ **Верно!**\nВы быстро отсчитали сдачу и заработали **{reward}** монет.\n"
+            f"Теперь можно снова в казино! /casino"
+        )
+    else:
+        await callback.message.edit_text(
+            f"❌ **Ошибка!**\nВы обсчитали покупателя, и администратор оштрафовал вас.\n"
+            f"Денег не начислено. Попробуй еще раз: /work"
+        )
+    await callback.answer()
