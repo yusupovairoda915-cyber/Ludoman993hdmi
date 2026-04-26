@@ -6,37 +6,37 @@ from database.methods import register_user, get_user_data, update_balance
 
 router = Router()
 
-
 @router.message(Command("start"))
 async def cmd_start(message: types.Message):
     user_id = message.from_user.id
     username = message.from_user.full_name
     
-    # Регистрируем в Firebase
+    # Регистрируем или получаем данные из Firebase
     is_new = register_user(user_id, username)
     data = get_user_data(user_id)
+    balance = data.get('balance', 0) # Получаем баланс из словаря
     
     if is_new:
-        welcome_text = (
-            f"🎰 Добро пожаловать в Ludoman993, {username}!\n\n"
-            f"Тебе начислен стартовый капитал: 💰 **{data['balance']}** монет.\n"
-            f"Используй /casino чтобы испытать удачу!"
-        )
+        greeting = f"🎰 Добро пожаловать в Ludoman993, {username}!\nТебе начислен стартовый капитал!"
     else:
-        welcome_text = (
-            f"👋 С возвращением, элита гемблинга, {username}!\n"
-            f"Твой баланс: 💰 **{data['balance']}** монет."
-        )
+        greeting = f"👋 С возвращением, {username}!"
+
+    # Твой новый текст со списком игр
+    welcome_text = (
+        f"{greeting}\n\n"
+        "Добро пожаловать в казино симулятор (внутриигровые деньги не настоящие и никак не связаны с ними)\n\n"
+        "**Игры:**\n"
+        "🎰 /slots [сумма] — слоты: риск высокий, но и награды тоже!\n"
+        "🎲 /dice [сумма] — подбросить кость: это быстро и не так рисково!\n"
+        "🎡 /roulette [цвет: black, red, green] [сумма] — классика азартных игр.\n"
+        "📈 /crash [сумма] — успей забрать по выгодному коэффициенту!\n\n"
+        "**Заработать:**\n"
+        "👨‍🍳 /work — посчитай и выдай сдачу клиенту. (+150)\n\n"
+        "Новые способы будут скоро...\n\n"
+        f"**Ваш баланс:** 💰 `{balance}` монет."
+    )
         
     await message.answer(welcome_text, parse_mode="Markdown")
-
-@router.message(Command("balance"))
-async def cmd_balance(message: types.Message):
-    data = get_user_data(message.from_user.id)
-    if data:
-        await message.answer(f"💵 Ваш текущий баланс: **{data['balance']}** монет.", parse_mode="Markdown")
-    else:
-        await message.answer("Сначала напиши /start, чтобы открыть счет!")
 
 @router.message(Command("free_money"))
 async def cmd_free_money(message: types.Message):
