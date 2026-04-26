@@ -258,3 +258,23 @@ async def crash_callback(callback: types.CallbackQuery):
         await callback.answer("Баланс пополнен!")
     else:
         await callback.answer("Слишком поздно!", show_alert=True)
+
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+
+@router.message(Command("free_money"))
+async def show_ads(message: types.Message):
+    user_id = message.from_user.id
+    # Твой ID из кабинета
+    block_id = "28696" 
+    
+    # Ссылка на рекламу
+    ad_url = f"https://render.adsgram.ai/show?blockId={block_id}&userId={user_id}"
+    
+    builder = InlineKeyboardBuilder()
+    builder.button(text="🎬 Посмотреть рекламу", url=ad_url)
+    
+    await message.answer(
+        "💰 **Нужны монеты?**\nПосмотри короткое видео и получишь **500 монет** на баланс!",
+        reply_markup=builder.as_markup(),
+        parse_mode="Markdown"
+    )
