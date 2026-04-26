@@ -1,10 +1,8 @@
 import random 
-from aiogram import Router, types
+from aiogram import Router, types, F
 from aiogram.filters import Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from database.methods import register_user, get_user_data, update_balance
-from aiogram import Router, types, F
-
 
 router = Router()
 
@@ -100,7 +98,7 @@ async def process_work_answer(callback: types.CallbackQuery):
     
     if user_answer == correct_answer:
         reward = 150 # Сколько платим за правильный ответ
-        await update_balance(callback.from_user.id, reward)
+        update_balance(callback.from_user.id, reward)
         await callback.message.edit_text(
             f"✅ **Верно!**\nВы быстро отсчитали сдачу и заработали **{reward}** монет.\n"
             f"Теперь можно снова в казино! /casino"
