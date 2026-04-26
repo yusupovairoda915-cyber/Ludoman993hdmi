@@ -1,13 +1,26 @@
+import os
+import json
 import firebase_admin
 from firebase_admin import credentials, db
 from config import config
 
-# Проверяем, не инициализировано ли приложение ранее (чтобы избежать ошибок при перезагрузке)
+# Проверяем, не инициализировано ли приложение ранее
 if not firebase_admin._apps:
-    cred = credentials.Certificate(config.FIREBASE_KEY_PATH)
+    # Пытаемся взять данные из переменной Railway
+    firebase_json = os.getenv("FIREBASE_KEY_PATH")
+
+    # Проверяем: если в переменной лежит JSON-текст (начинается с {), парсим его
+    if firebase_json and firebase_json.strip().startswith("{"):
+        cred_dict = json.loads(firebase_json)
+        cred = credentials.Certificate(cred_dict)
+    else:
+        # Если переменной нет или там просто путь, используем старый метод (для локалки)
+        cred = credentials.Certificate(config.FIREBASE_KEY_PATH)
+        
     firebase_admin.initialize_app(cred, {
         'databaseURL': config.DB_URL
     })
+
 
 def register_user(user_id: int, username: str):
     """Регистрирует новичка в базе и выдает стартовый капитал."""
