@@ -1,9 +1,13 @@
+import random 
 from aiogram import Router, types
 from aiogram.filters import Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from database.methods import register_user, get_user_data
+from database.methods import register_user, get_user_data, update_balance
+from aiogram import Router, types, F
+
 
 router = Router()
+
 
 @router.message(Command("start"))
 async def cmd_start(message: types.Message):
@@ -88,7 +92,7 @@ async def cmd_work(message: types.Message):
         parse_mode="Markdown"
     )
 
-@router.callback_query(lambda c: c.data.startswith('work_'))
+@router.callback_query(F.data.startswith('work_'))
 async def process_work_answer(callback: types.CallbackQuery):
 
     # Разбираем данные из кнопки
