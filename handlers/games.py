@@ -58,4 +58,39 @@ async def cmd_slots(message: types.Message, command: CommandObject):
         await message.reply(f"{result_text}\nТвой новый баланс: {new_balance} 💰")
     else:
         await message.reply(result_text)
+@router.message(Command("dice"))
+async def cmd_dice(message: types.Message, command: CommandObject):
+    user_id = message.from_user.id
+    user_data = get_user_data(user_id)
+    
+    if not user_data:
+        return await message.answer("Сначала напиши /start!")
+
+    if not command.args or not command.args.isdigit():
+        return await message.answer("Пример: `/dice 100`", parse_mode="Markdown")
+
+    bet = int(command.args)
+    current_balance = user_data['balance']
+
+    if bet <= 0:
+        return await message.answer("Ставка должна быть больше 0!")
+    
+    if bet > current_balance:
+        return await message.answer(f"Недостаточно средств! Баланс: {current_balance} 💰")
+
+    # Списываем ставку
+    update_balance(user_id, -bet)
+
+    # Бросаем обычный кубик
+    msg = await message.answer_dice(emoji="🎲")
+    value = msg.dice.value
+    
+    await asyncio.sleep(3) # Ждем анимацию
+
+    if value >= 4: # Победа на 4, 5, 6
+        reward = bet * 2
+        new_balance = update_balance(user_id, reward)
+        await message.reply(f"📈 Выпало {value}! Ты выиграл: {reward} 💰\nБаланс: {new_balance}")
+    else:
+        await message.reply(f"📉 Выпало {value}. Проигрыш! Попробуй еще раз.")
 
