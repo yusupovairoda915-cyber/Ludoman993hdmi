@@ -2,20 +2,19 @@ import asyncio
 import logging
 from aiogram import Bot, Dispatcher
 from config import config
-from handlers import users  # Импортируем наш будущий модуль с хендлерами
+# 1. Добавь сюда импорт games через запятую
+from handlers import users, games  
 
-# Настраиваем логирование, чтобы видеть ошибки в консоли
 logging.basicConfig(level=logging.INFO)
 
 async def main():
-    # Инициализируем бота и диспетчер
     bot = Bot(token=config.BOT_TOKEN)
     dp = Dispatcher()
 
-    # Подключаем роутеры (маршруты) из папки handlers
+    # 2. И здесь обязательно зарегистрируй роутер для игр
     dp.include_router(users.router)
+    dp.include_router(games.router) 
 
-    # Запускаем бота (пропускаем накопленные сообщения)
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
@@ -24,4 +23,3 @@ if __name__ == "__main__":
         asyncio.run(main())
     except KeyboardInterrupt:
         print("Бот выключен")
-
