@@ -11,6 +11,8 @@ router = Router()
 
 router = Router()
 
+current_games = {}
+
 @router.message(Command("slots"))
 async def cmd_slots(message: types.Message, command: CommandObject):
     user_id = message.from_user.id
@@ -145,29 +147,31 @@ async def cmd_roulette(message: types.Message, command: CommandObject):
         await msg.edit_text(f"Выпало: {result_number} ({win_color})! 🎉\nТы выиграл: {reward} 💰\nБаланс: {new_balance}")
     else:
         await msg.edit_text(f"Выпало: {result_number} ({win_color}). 💀\nСтавка проиграна!")
+# В начало файла к импортам добавь:
+# current_games = {} 
+
 @router.message(Command("crash"))
 async def cmd_crash(message: types.Message, command: CommandObject):
     user_id = message.from_user.id
     user_data = get_user_data(user_id)
 
-    if not user_data:
-        return await message.answer("Сначала напиши /start!")
-
     if not command.args or not command.args.isdigit():
-        return await message.answer("🚀 Пример: `/crash 100`", parse_mode="Markdown")
+        return await message.answer("🚀 Пример: `/crash 100`")
 
     bet = int(command.args)
     if bet > user_data['balance'] or bet <= 0:
-        return await message.answer(f"Ошибка! Баланс: {user_data['balance']} 💰")
+        return await message.answer("Недостаточно средств!")
 
     update_balance(user_id, -bet)
 
-    # Точка взрыва: шанс 10% на 1.0x, иначе рандом до 10.0x
     crash_point = 1.0 if random.random() < 0.1 else round(random.uniform(1.1, 10.0), 2)
     current_multiplier = 1.0
     
+    # Запоминаем, что юзер начал игру
+    game_id = f"{user_id}_{random.randint(100, 999)}"
+    
     builder = InlineKeyboardBuilder()
-    builder.button(text=f"💰 ЗАБРАТЬ (1.0x)", callback_data=f"cr_{bet}_{crash_point}")
+    builder.button(text=f"💰 ЗАБРАТЬ (1.0x)", callback_data=f"cr_{bet}_{crash_point}_{game_id}")
     
     game_msg = await message.answer(
         f"🚀 **РАКЕТА ПОШЛА!**\n\n📈 Множитель: **{current_multiplier}x**",
@@ -175,46 +179,53 @@ async def cmd_crash(message: types.Message, command: CommandObject):
         parse_mode="Markdown"
     )
 
-    # Цикл полета ракеты
+    # ЦИКЛ ПОЛЕТА
     while current_multiplier < crash_point:
-        await asyncio.sleep(0.8) # Скорость обновления
+        await asyncio.sleep(0.8)
         current_multiplier = round(current_multiplier + 0.1, 2)
         
+        # КРИТИЧЕСКАЯ ПРОВЕРКА: 
+        # Пытаемся получить сообщение. Если кнопка исчезла (мы её удалили при выигрыше), 
+        # значит игра должна остановиться.
+        try:
+            current_msg = await message.bot.edit_message_text(
+                chat_id=message.chat.id,
+                message_id=game_msg.message_id,
+                text=f"🚀 **ЛЕЙТИИИМ!**\n\n📈 Множитель: **{current_multiplier}x**\n💰 Куш: {int(bet * current_multiplier)}",
+                reply_markup=InlineKeyboardBuilder().button(
+                    text=f"💰 ЗАБРАТЬ ({current_multiplier}x)", 
+                    callback_data=f"cr_{bet}_{crash_point}_{game_id}"
+                ).as_markup(),
+                parse_mode="Markdown"
+            )
+        except Exception:
+            # Если сообщение нельзя отредактировать (оно уже изменено на "ВЫИГРАЛ"),
+            # мы просто выходим из цикла.
+            return 
+
         if current_multiplier >= crash_point:
             break
 
-        new_kb = InlineKeyboardBuilder()
-        new_kb.button(text=f"💰 ЗАБРАТЬ ({current_multiplier}x)", callback_data=f"cr_{bet}_{crash_point}")
-        
-        try:
-            await game_msg.edit_text(
-                f"🚀 **ЛЕЙТИИИМ!**\n\n📈 Множитель: **{current_multiplier}x**\n💰 Куш: {int(bet * current_multiplier)}",
-                reply_markup=new_kb.as_markup(),
-                parse_mode="Markdown"
-            )
-        except TelegramBadRequest:
-            continue
-
+    # Если ракета долетела до взрыва и цикл не прервался return-ом
     await game_msg.edit_text(f"💥 **БА-БАХ!**\n\nВзрыв на **{crash_point}x**.\nМинус {bet} 💰")
 
-# Обработка кнопки "ЗАБРАТЬ"
 @router.callback_query(F.data.startswith("cr_"))
 async def crash_callback(callback: types.CallbackQuery):
     data = callback.data.split("_")
-    bet, crash_limit = int(data[1]), float(data[2])
+    bet = int(data[1])
+    crash_limit = float(data[2])
     
+    # Достаем текущий икс из текста
     try:
-        # Вытягиваем текущий икс из текста сообщения
         cur_m = float(callback.message.text.split("Множитель: ")[1].split("x")[0])
     except:
-        # Если в тексте уже "ЛЕЙТИИИМ", ищем там
-        cur_m = float(callback.message.text.split("Множитель: ")[1].split("x")[0])
+        return
 
     if cur_m < crash_limit:
         reward = int(bet * cur_m)
-        new_bal = update_balance(callback.from_user.id, reward)
+        update_balance(callback.from_user.id, reward)
+        # МЕНЯЕМ ТЕКСТ И УДАЛЯЕМ КНОПКИ (это остановит цикл while)
         await callback.message.edit_text(f"✅ **УСПЕЛ!**\n\nЗабрал на: **{cur_m}x**\nВыигрыш: **{reward} 💰**")
-        await callback.answer(f"Баланс пополнен!")
+        await callback.answer("Баланс пополнен!")
     else:
-        await callback.answer("Уже взорвалось! 💥", show_alert=True)
-
+        await callback.answer("Слишком поздно!", show_alert=True)
