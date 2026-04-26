@@ -89,7 +89,8 @@ async def cmd_work(message: types.Message):
     )
 
 @router.callback_query(lambda c: c.data.startswith('work_'))
-async def process_work_answer(callback: types.Callback_query):
+async def process_work_answer(callback: types.CallbackQuery):
+
     # Разбираем данные из кнопки
     _, user_answer, correct_answer = callback.data.split('_')
     
