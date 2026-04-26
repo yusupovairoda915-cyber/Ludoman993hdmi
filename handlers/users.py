@@ -1,5 +1,6 @@
 from aiogram import Router, types
 from aiogram.filters import Command
+from aiogram.utils.keyboard import InlineKeyboardBuilder # Добавили для создания кнопки
 from database.methods import register_user, get_user_data
 
 router = Router()
@@ -34,3 +35,25 @@ async def cmd_balance(message: types.Message):
         await message.answer(f"💵 Ваш текущий баланс: **{data['balance']}** монет.", parse_mode="Markdown")
     else:
         await message.answer("Сначала напиши /start, чтобы открыть счет!")
+
+# --- НОВАЯ КОМАНДА ДЛЯ РЕКЛАМЫ ---
+
+@router.message(Command("free_money"))
+async def cmd_free_money(message: types.Message):
+    builder = InlineKeyboardBuilder()
+    
+    # Твой BlockID из Adsgram
+    block_id = "28696" 
+    
+    # Ссылка формируется с передачей твоего домена на Railway и ID пользователя
+    ad_url = f"https://partner.adsgram.ai/api/reward?blockId={block_id}&user_id={message.from_user.id}"
+    
+    builder.row(types.InlineKeyboardButton(
+        text="📺 Посмотреть видео (+500 💰)", 
+        url=ad_url
+    ))
+
+    await message.answer(
+        "Нужны монеты? Посмотри короткое рекламное видео и получи вознаграждение!",
+        reply_markup=builder.as_markup()
+    )
