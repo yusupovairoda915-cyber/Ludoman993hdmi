@@ -1,3 +1,4 @@
+import random
 import asyncio
 import random  # Для генерации точки взрыва
 from aiogram import Router, types, F
