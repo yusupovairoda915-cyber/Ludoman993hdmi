@@ -67,4 +67,21 @@ def get_leaderboard(limit: int = 5):
     # Сортируем по балансу и берем топ
     sorted_users = sorted(users.items(), key=lambda x: x[1]['balance'], reverse=True)
     return sorted_users[:limit]
-
+def get_top_users(limit=10):
+    # Допустим, твоя коллекция называется 'users'
+    users_ref = db.collection('users')
+    
+    # Сортируем по балансу в порядке убывания и берем первые N человек
+    query = users_ref.order_by('balance', direction='DESCENDING').limit(limit)
+    results = query.stream()
+    
+    leaderboard = []
+    for doc in results:
+        user_data = doc.to_dict()
+        leaderboard.append({
+            'name': user_data.get('username', 'Аноним'),
+            'balance': user_data.get('balance', 0)
+        })
+    
+    return leaderboard
+    
