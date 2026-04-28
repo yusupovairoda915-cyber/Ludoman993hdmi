@@ -84,4 +84,18 @@ def get_top_users(limit=10):
         })
     
     return leaderboard
+    def get_user_rank(user_id):
+    users_ref = db.collection('users')
+    user_doc = users_ref.document(str(user_id)).get()
+    
+    if not user_doc.exists:
+        return None
+    
+    user_balance = user_doc.to_dict().get('balance', 0)
+    
+    # Считаем количество людей, у которых баланс строго больше
+    rank_query = users_ref.where('balance', '>', user_balance).count()
+    rank = rank_query.get()[0][0].value + 1
+    
+    return rank
     
