@@ -4,7 +4,7 @@ import logging
 from aiohttp import web
 from aiogram import Bot, Dispatcher
 import config
-from handlers import users, games
+from handlers import users, games, admin
 # Импортируем именно из твоего файла methods.py
 from database.methods import update_balance 
 
@@ -48,6 +48,7 @@ async def main():
     # Регистрация хендлеров
     dp.include_router(users.router)
     dp.include_router(games.router)
+    dp.include_router(admin.router)
 
     # Запуск бота
     await bot.delete_webhook(drop_pending_updates=True)
