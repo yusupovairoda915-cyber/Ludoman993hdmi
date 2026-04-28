@@ -1,4 +1,4 @@
-from aiogram import Router, types, F
+from aiogram import Router, types, F, Bot
 from aiogram.filters import Command, CommandObject
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from database.methods import get_user_data, update_balance, get_all_users
@@ -149,7 +149,7 @@ async def cmd_broadcast(message: types.Message, command: CommandObject):
     for user_id in all_users:
         try:
             await bot.send_message(
-                user_id,
+                int(user_id),
                 f"📢 **Объявление от администратора:**\n\n{broadcast_text}",
                 parse_mode="Markdown"
             )
@@ -185,7 +185,7 @@ async def admin_stats(callback: types.CallbackQuery):
     total_balance = 0
     
     for user_id in all_users:
-        user_data = get_user_data(user_id)
+        user_data = get_user_data(int(user_id))
         if user_data:
             total_balance += user_data.get('balance', 0)
     
