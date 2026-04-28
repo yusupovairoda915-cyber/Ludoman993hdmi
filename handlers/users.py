@@ -2,7 +2,8 @@ import random
 from aiogram import Router, types, F
 from aiogram.filters import Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from database.methods import register_user, get_user_data, update_balance
+from database.methods import register_user, get_user_data, update_balance, get_top_users, get_user_rank
+
 
 router = Router()
 
