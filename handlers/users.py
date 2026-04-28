@@ -109,3 +109,36 @@ async def process_work_answer(callback: types.CallbackQuery):
             f"Денег не начислено. Попробуй еще раз: /work"
         )
     await callback.answer()
+@router.message(Command("top"))
+async def cmd_top(message: types.Message):
+    user_id = message.from_user.id
+    top_list = get_top_users(limit=10)
+    user_rank = get_user_rank(user_id)
+    
+    if not top_list:
+        await message.answer("🏆 Список лидеров пока пуст!")
+        return
+
+    text = "🏆 **Таблица лидеров Ludoman993**\n\n"
+    
+    for i, user in enumerate(top_list, 1):
+        place = {1: "🥇", 2: "🥈", 3: "🥉"}.get(i, f"{i}.")
+        
+        # Выделяем самого пользователя в общем списке, если он там есть
+        name_text = f"**{user['name']}** (ЭТО ВЫ)" if i == user_rank else user['name']
+        name = name_text.replace('_', '\\_').replace('*', '\\*')
+        
+        text += f"{place} {name} — 💰 `{user['balance']}`\n"
+
+    # --- ТВОЯ ОРИГИНАЛЬНАЯ ИДЕЯ: Титулы ---
+    title = "💸 Начинающий"
+    if user_rank == 1: title = "👑 Бог Азарта"
+    elif user_rank <= 3: title = "💎 Элита Юнусабада"
+    elif user_rank <= 10: title = "🎰 Хайроллер"
+    elif user_rank <= 50: title = "🃏 Игрок"
+
+    text += f"\n" + "—" * 15 + "\n"
+    text += f"👤 **Ваше место:** `{user_rank}`\n"
+    text += f"🎖 **Ваш титул:** {title}"
+    
+    await message.answer(text, parse_mode="Markdown")
