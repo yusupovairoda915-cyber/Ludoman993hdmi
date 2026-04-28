@@ -58,6 +58,7 @@ async def cmd_free_money(message: types.Message):
         reply_markup=builder.as_markup(),
         parse_mode="Markdown"
     )
+
 @router.message(Command("work"))
 async def cmd_work(message: types.Message):
     # Генерируем случайную ситуацию на кассе
@@ -93,23 +94,26 @@ async def cmd_work(message: types.Message):
 
 @router.callback_query(F.data.startswith('work_'))
 async def process_work_answer(callback: types.CallbackQuery):
-
     # Разбираем данные из кнопки
     _, user_answer, correct_answer = callback.data.split('_')
     
-    if user_answer == correct_answer:
+    # Преобразуем строки в числа для корректного сравнения
+    if int(user_answer) == int(correct_answer):
         reward = 150 # Сколько платим за правильный ответ
         update_balance(callback.from_user.id, reward)
         await callback.message.edit_text(
             f"✅ **Верно!**\nВы быстро отсчитали сдачу и заработали **{reward}** монет.\n"
-            f"Теперь можно снова в казино! /casino"
+            f"Теперь можно снова в казино! /casino",
+            parse_mode="Markdown"
         )
     else:
         await callback.message.edit_text(
             f"❌ **Ошибка!**\nВы обсчитали покупателя, и администратор оштрафовал вас.\n"
-            f"Денег не начислено. Попробуй еще раз: /work"
+            f"Денег не начислено. Попробуй еще раз: /work",
+            parse_mode="Markdown"
         )
     await callback.answer()
+
 @router.message(Command("top"))
 async def cmd_top(message: types.Message):
     user_id = message.from_user.id
