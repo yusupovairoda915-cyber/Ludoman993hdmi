@@ -78,4 +78,12 @@ def get_user_rank(user_id):
             rank += 1
             
     return rank
-        
+
+def get_all_users():
+    """Получает список всех user_id"""
+    ref = db.reference('users')
+    users = ref.get()
+    if not users:
+        return []
+    
+    return list(users.keys())
