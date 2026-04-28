@@ -15,7 +15,7 @@ class Config:
     FIREBASE_KEY_PATH = "serviceAccountKey.json"
     
     # ID администратора (замени на ID @prosto_993)
-    ADMIN_ID = os.getenv("ADMIN_ID")  # ЗАМЕНИ НА РЕАЛЬНЫЙ ID!
+    ADMIN_ID = 6924098464  # ЗАМЕНИ НА РЕАЛЬНЫЙ ID!
 
 # Экземпляр конфига для удобного импорта
 config = Config()
